@@ -35,7 +35,7 @@ try:
         soc.sendall(stream_in.read(CHUNK))
         stream_out.write(soc.recv(CHUNK * 2))
 except ConnectionResetError as e:
-    print('Connection error...')
+    print('Disconnected...')
 except KeyboardInterrupt as e:
     print('Stopping app...')
 finally:
