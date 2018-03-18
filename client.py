@@ -33,7 +33,7 @@ stream_out = audio_out.open(format=format_out, channels=CHANNELS, rate=RATE_OUT,
 try:
     while True:
         soc.sendall(stream_in.read(CHUNK))
-        stream_out.write(soc.recv(CHUNK * 2))
+        stream_out.write(soc.recv(CHUNK * 10))
 except ConnectionResetError as e:
     print('Disconnected...')
 except KeyboardInterrupt as e:
