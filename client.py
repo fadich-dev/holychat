@@ -1,45 +1,37 @@
-import socket
 import pyaudio
-from time import time
-from settings import HOST, PORT, CHUNK
 
 
 FORMAT = pyaudio.paInt16
-CHANNELS = 1
-# By default... RATE = 44100
-RATE_IN = 80100
-RATE_OUT = 82100
 WIDTH = 2
+CHANNELS = 1
+RATE_IN = 40000
+RATE_OUT = 60000
+CHUNK_IN = 32
+CHUNK_OUT = int(RATE_OUT / RATE_IN * CHUNK_IN)
+# By default... RATE = 44100
 
-CLIENT_ID = time()
-
-try:
-    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.connect((HOST, PORT))
-except ConnectionRefusedError as e:
-    print('Connection refused by <{}:{}>'.format(HOST, PORT))
-    exit()
-
+print(RATE_IN, RATE_OUT)
+print(CHUNK_IN, CHUNK_OUT)
 
 audio_in = pyaudio.PyAudio()
 audio_out = pyaudio.PyAudio()
 
 format_out = audio_out.get_format_from_width(WIDTH)
 
-stream_in = audio_in.open(format=FORMAT, channels=CHANNELS, rate=RATE_IN, input=True, frames_per_buffer=CHUNK)
-stream_out = audio_out.open(format=format_out, channels=CHANNELS, rate=RATE_OUT, output=True, frames_per_buffer=CHUNK)
+stream_in = audio_in.open(format=FORMAT, channels=CHANNELS, rate=RATE_IN, input=True, frames_per_buffer=CHUNK_IN)
+stream_out = audio_out.open(format=format_out, channels=CHANNELS, rate=RATE_OUT, output=True, frames_per_buffer=CHUNK_OUT)
 
 
 try:
     while True:
-        soc.sendall(stream_in.read(CHUNK))
-        stream_out.write(soc.recv(CHUNK * 10))
+        print('Speak...')
+        rec = stream_in.read(2 ** 17)
+        stream_out.write(rec)
 except ConnectionResetError as e:
     print('Disconnected...')
 except KeyboardInterrupt as e:
     print('Stopping app...')
 finally:
-    soc.close()
     stream_in.stop_stream()
     stream_in.close()
     stream_out.stop_stream()
