@@ -109,7 +109,7 @@ class MainWindow(Gtk.Window):
         return entry
 
     def get_reset_options_button(self):
-        btn = ClickableButton().init(self.reset_options, Gtk.Label(label='Stop'))
+        btn = ClickableButton().init(self.reset_options, Gtk.Label(label='Default'))
         return btn
 
     def get_options(self):
