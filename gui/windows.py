@@ -10,7 +10,7 @@ import threading
 
 class MainWindow(Gtk.Window):
     _main_box = None
-    _record = b''
+    _record = []
     _buttons = {
         'record': dict()
     }
@@ -21,6 +21,7 @@ class MainWindow(Gtk.Window):
     __recording = False
     __input_thread = None
     __output_thread = None
+    __stop_event = threading.Event()
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -124,7 +125,7 @@ class MainWindow(Gtk.Window):
         return self
 
     def _on_start_record(self, widget):
-        self._record = b''
+        self._record = []
         self.__recording = True
         widget.set_sensitive(False)
         self._buttons.get('record').get('stop').set_sensitive(True)
@@ -139,13 +140,15 @@ class MainWindow(Gtk.Window):
         self._buttons.get('record').get('start').set_sensitive(True)
         self._buttons.get('record').get('play').set_sensitive(True)
 
-        self._join_threads()
+        self.__stop_event.set()
 
     def _on_play_record(self, widget):
-        self.__output_thread = threading.Thread(target=self.__play_record, kwargs=self.get_options())
-        self.__output_thread.start()
+        widget.set_sensitive(False)
+        self._buttons.get('record').get('start').set_sensitive(False)
+        self._buttons.get('record').get('stop').set_sensitive(True)
 
-        self._join_threads()
+        self.__output_thread = threading.Thread(target=self.__play_record)
+        self.__output_thread.start()
 
     def _join_threads(self):
         if self.__input_thread:
@@ -154,15 +157,22 @@ class MainWindow(Gtk.Window):
             self.__output_thread.join()
 
     def __read_record(self):
+        self.__stop_event = threading.Event()
         stream = record.create_stream_in()
         while self.__recording:
-            self._record += stream.read(record.RECORD_CHUNK * 10)
+            self._record.append(stream.read(record.RECORD_CHUNK * 10))
+            if self.__stop_event.is_set():
+                break
         stream.stop_stream()
         stream.close()
 
-    def __play_record(self, **kwargs):
-        stream = record.create_stream_out(**kwargs)
-        stream.write(self._record)
+    def __play_record(self):
+        self.__stop_event = threading.Event()
+        stream = record.create_stream_out(**self.get_options())
+        for frame in self._record:
+            stream.write(frame)
+            if self.__stop_event.is_set():
+                break
         stream.stop_stream()
         stream.close()
 

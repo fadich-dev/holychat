@@ -6,7 +6,7 @@ RECORD_WIDTH = 2
 RECORD_FORMAT_OUT = pyaudio.PyAudio().get_format_from_width(RECORD_WIDTH)
 RECORD_CHANNELS = 1
 RECORD_RATE_IN = 32000
-RECORD_CHUNK = 32
+RECORD_CHUNK = 96
 
 
 def create_stream_in(
